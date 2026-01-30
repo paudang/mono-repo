@@ -7,8 +7,10 @@ import { ItemController } from './interfaces/http/ItemController';
 const port = process.env.PORT || 3000;
 
 // Composition Root
+// Composition Root
 const pool = getPool();
 const itemRepo = new PostgresItemRepository(pool);
+
 const itemService = new ItemService(itemRepo);
 const itemController = new ItemController(itemService);
 

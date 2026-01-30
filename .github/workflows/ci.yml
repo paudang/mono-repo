@@ -21,13 +21,19 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18.x'
+        node-version: '22.x'
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
         
     - run: npm ci
     - run: npm run lint
-    - run: npm test
+    - run: npm run test:coverage
+    
+    - name: Archive Backend Coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend/coverage
 
   # ============================================================================
   # Frontend CI
@@ -43,17 +49,50 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18.x'
+        node-version: '22.x'
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
         
     - run: npm ci
     - run: npm run lint
-    - run: npm test
+    - run: npm run test:coverage
+    
+    - name: Archive Frontend Coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-coverage
+        path: frontend/coverage
 
   
-  build-push:
+  sonarqube:
     needs: [backend-ci, frontend-ci]
+    runs-on: ubuntu-latest
+    environment: CI/CD Nodejs
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Download Backend Coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend/coverage
+        
+    - name: Download Frontend Coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-coverage
+        path: frontend/coverage
+        
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d # v5.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  build-push:
+    needs: [backend-ci, frontend-ci, sonarqube]
     runs-on: ubuntu-latest
     environment: CI/CD Nodejs
     steps:
