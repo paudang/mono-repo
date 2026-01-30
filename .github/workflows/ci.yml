@@ -67,6 +67,7 @@ jobs:
   sonarqube:
     needs: [backend-ci, frontend-ci]
     runs-on: ubuntu-latest
+    environment: CI/CD Nodejs
     steps:
     - uses: actions/checkout@v4
       with:
